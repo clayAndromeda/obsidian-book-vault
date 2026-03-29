@@ -1,0 +1,38 @@
+.book-vault-suggestion {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 0;
+}
+
+.book-vault-thumbnail {
+	width: 40px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+
+.book-vault-suggestion-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.book-vault-suggestion-title {
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.book-vault-suggestion-author {
+	font-size: 0.85em;
+	color: var(--text-muted);
+}
+
+.book-vault-suggestion-publisher {
+	font-size: 0.8em;
+	color: var(--text-faint);
+}
