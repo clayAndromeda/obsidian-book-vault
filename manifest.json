@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-book-vault",
 	"name": "Book Vault",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "書名またはISBNから書籍情報を自動取得し、テンプレートに従った読書ノートを生成します",
 	"author": "clayAndromeda",
