@@ -11,6 +11,9 @@ data.json
 # env
 .env
 
+# claude code local settings
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db
