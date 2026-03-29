@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"deploy": "npm run build && node --env-file=.env deploy.mjs"
+		"deploy": "npm run build && node --env-file=.env deploy.mjs",
+		"version": "node version-bump.mjs && git add manifest.json"
 	},
 	"keywords": [],
 	"author": "clayAndromeda",
