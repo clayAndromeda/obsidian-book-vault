@@ -63,7 +63,33 @@ export async function searchBooks(query: string, maxResults: number): Promise<Bo
 	const q = isISBN(query) ? `isbn:${query.replace(/-/g, "")}` : `intitle:${query}`;
 	const url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}`;
 
-	const response = await requestUrl({ url });
+	let response;
+	try {
+		response = await requestUrl({ url });
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		const responseText = (e as { responseText?: string }).responseText;
+		let detail = "";
+		if (status) {
+			detail += `HTTP ${status}`;
+		}
+		if (responseText) {
+			try {
+				const body = JSON.parse(responseText);
+				const apiMessage = body?.error?.message || body?.error?.errors?.[0]?.message;
+				if (apiMessage) {
+					detail += `: ${apiMessage}`;
+				}
+			} catch {
+				// JSON parse failed, use raw text
+				if (responseText.length <= 200) {
+					detail += `: ${responseText}`;
+				}
+			}
+		}
+		throw new Error(detail || (e instanceof Error ? e.message : "APIリクエスト失敗"));
+	}
+
 	const data = response.json;
 
 	if (!data.items || data.items.length === 0) {
