@@ -26,7 +26,7 @@ export default class BookVaultPlugin extends Plugin {
 	}
 
 	private openBookSearch() {
-		new BookSearchModal(this.app, this.settings.maxSearchResults, async (book) => {
+		new BookSearchModal(this.app, this.settings.maxSearchResults, this.settings.googleBooksApiKey, async (book) => {
 			const file = await createBookNote(this.app, book, this.settings);
 			if (this.settings.openAfterCreate) {
 				await this.app.workspace.getLeaf().openFile(file);

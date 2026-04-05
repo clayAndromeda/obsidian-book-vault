@@ -5,11 +5,13 @@ import { searchBooks } from "./google-books-api";
 export class BookSearchModal extends Modal {
 	private query: string = "";
 	private maxResults: number;
+	private apiKey: string;
 	private onSelect: (book: BookInfo) => void;
 
-	constructor(app: App, maxResults: number, onSelect: (book: BookInfo) => void) {
+	constructor(app: App, maxResults: number, apiKey: string, onSelect: (book: BookInfo) => void) {
 		super(app);
 		this.maxResults = maxResults;
+		this.apiKey = apiKey;
 		this.onSelect = onSelect;
 	}
 
@@ -51,7 +53,7 @@ export class BookSearchModal extends Modal {
 
 		new Notice("検索中...");
 		try {
-			const results = await searchBooks(query, this.maxResults);
+			const results = await searchBooks(query, this.maxResults, this.apiKey || undefined);
 			this.close();
 
 			if (results.length === 0) {

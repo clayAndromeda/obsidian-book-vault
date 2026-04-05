@@ -21,6 +21,7 @@ export interface BookVaultSettings {
 	thumbnailFolder: string;
 	openAfterCreate: boolean;
 	maxSearchResults: number;
+	googleBooksApiKey: string;
 }
 
 export const DEFAULT_NOTE_TEMPLATE = `---
@@ -71,4 +72,5 @@ export const DEFAULT_SETTINGS: BookVaultSettings = {
 	thumbnailFolder: "Books/thumbnails",
 	openAfterCreate: true,
 	maxSearchResults: 10,
+	googleBooksApiKey: "",
 };

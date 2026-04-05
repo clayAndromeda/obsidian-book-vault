@@ -15,6 +15,19 @@ export class BookVaultSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
+			.setName("Google Books APIキー")
+			.setDesc("Google Cloud ConsoleでBooks APIを有効化し、APIキーを作成してください。未設定でも利用できますが、検索回数に制限があります。")
+			.addText((text) =>
+				text
+					.setPlaceholder("AIzaSy...（未設定でも利用可）")
+					.setValue(this.plugin.settings.googleBooksApiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.googleBooksApiKey = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("ノート保存フォルダ")
 			.setDesc("書籍ノートを保存するフォルダ")
 			.addText((text) =>

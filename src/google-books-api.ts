@@ -59,42 +59,65 @@ function volumeToBookInfo(volume: GoogleBooksVolume): BookInfo {
 	};
 }
 
-export async function searchBooks(query: string, maxResults: number): Promise<BookInfo[]> {
-	const q = isISBN(query) ? `isbn:${query.replace(/-/g, "")}` : `intitle:${query}`;
-	const url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}`;
-
-	let response;
-	try {
-		response = await requestUrl({ url });
-	} catch (e: unknown) {
-		const status = (e as { status?: number }).status;
-		const responseText = (e as { responseText?: string }).responseText;
-		let detail = "";
-		if (status) {
-			detail += `HTTP ${status}`;
-		}
-		if (responseText) {
-			try {
-				const body = JSON.parse(responseText);
-				const apiMessage = body?.error?.message || body?.error?.errors?.[0]?.message;
-				if (apiMessage) {
-					detail += `: ${apiMessage}`;
-				}
-			} catch {
-				// JSON parse failed, use raw text
-				if (responseText.length <= 200) {
-					detail += `: ${responseText}`;
-				}
+function parseApiError(e: unknown): { status?: number; message: string } {
+	const status = (e as { status?: number }).status;
+	const responseText = (e as { responseText?: string }).responseText;
+	let detail = "";
+	if (status) {
+		detail += `HTTP ${status}`;
+	}
+	if (responseText) {
+		try {
+			const body = JSON.parse(responseText);
+			const apiMessage = body?.error?.message || body?.error?.errors?.[0]?.message;
+			if (apiMessage) {
+				detail += `: ${apiMessage}`;
+			}
+		} catch {
+			if (responseText.length <= 200) {
+				detail += `: ${responseText}`;
 			}
 		}
-		throw new Error(detail || (e instanceof Error ? e.message : "APIリクエスト失敗"));
+	}
+	return { status, message: detail || (e instanceof Error ? e.message : "APIリクエスト失敗") };
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function searchBooks(query: string, maxResults: number, apiKey?: string): Promise<BookInfo[]> {
+	const q = isISBN(query) ? `isbn:${query.replace(/-/g, "")}` : `intitle:${query}`;
+	let url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}`;
+	if (apiKey) {
+		url += `&key=${encodeURIComponent(apiKey)}`;
 	}
 
-	const data = response.json;
+	const MAX_RETRIES = 2;
+	let lastError: { status?: number; message: string } | undefined;
 
-	if (!data.items || data.items.length === 0) {
-		return [];
+	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+		try {
+			const response = await requestUrl({ url });
+			const data = response.json;
+
+			if (!data.items || data.items.length === 0) {
+				return [];
+			}
+
+			return (data.items as GoogleBooksVolume[]).map(volumeToBookInfo);
+		} catch (e: unknown) {
+			lastError = parseApiError(e);
+
+			if (lastError.status === 429 && attempt < MAX_RETRIES) {
+				const waitMs = 1000 * Math.pow(2, attempt); // 1s, 2s
+				await sleep(waitMs);
+				continue;
+			}
+
+			break;
+		}
 	}
 
-	return (data.items as GoogleBooksVolume[]).map(volumeToBookInfo);
+	throw new Error(lastError?.message || "APIリクエスト失敗");
 }
