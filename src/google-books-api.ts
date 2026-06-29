@@ -86,9 +86,24 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function searchBooks(query: string, maxResults: number, apiKey?: string): Promise<BookInfo[]> {
+export async function searchBooksForSeries(query: string, apiKey?: string): Promise<BookInfo[]> {
+	const pageSize = 40;
+	const maxPages = 3;
+	const all: BookInfo[] = [];
+
+	for (let page = 0; page < maxPages; page++) {
+		const items = await searchBooks(query, pageSize, apiKey, page * pageSize);
+		all.push(...items);
+		if (items.length < pageSize) break;
+		if (page < maxPages - 1) await sleep(300);
+	}
+
+	return all;
+}
+
+export async function searchBooks(query: string, maxResults: number, apiKey?: string, startIndex = 0): Promise<BookInfo[]> {
 	const q = isISBN(query) ? `isbn:${query.replace(/-/g, "")}` : `intitle:${query}`;
-	let url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}`;
+	let url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}&startIndex=${startIndex}`;
 	if (apiKey) {
 		url += `&key=${encodeURIComponent(apiKey)}`;
 	}

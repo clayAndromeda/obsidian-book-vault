@@ -1,6 +1,6 @@
 import { App, Modal, SuggestModal, Notice, Setting } from "obsidian";
 import { BookInfo } from "./types";
-import { searchBooks } from "./google-books-api";
+import { searchBooks, searchBooksForSeries } from "./google-books-api";
 import { parseVolumeNumber } from "./book-note-creator";
 
 export class BookSearchModal extends Modal {
@@ -172,7 +172,7 @@ export class SeriesSearchModal extends Modal {
 
 		new Notice("検索中...");
 		try {
-			const results = await searchBooks(query, 40, this.apiKey || undefined);
+			const results = await searchBooksForSeries(query, this.apiKey || undefined);
 			this.close();
 
 			if (results.length === 0) {
@@ -201,9 +201,21 @@ class SeriesSelectModal extends Modal {
 	constructor(app: App, seriesName: string, books: BookInfo[], onSelect: (seriesName: string, books: BookInfo[]) => void) {
 		super(app);
 		this.seriesName = seriesName;
-		this.books = [...books].sort((a, b) => parseVolumeNumber(a.title) - parseVolumeNumber(b.title));
+		const sorted = [...books].sort((a, b) => parseVolumeNumber(a.title) - parseVolumeNumber(b.title));
+		this.books = this.deduplicateByVolumeNumber(sorted);
 		this.onSelect = onSelect;
 		this.checked = new Array(this.books.length).fill(true);
+	}
+
+	private deduplicateByVolumeNumber(books: BookInfo[]): BookInfo[] {
+		const seen = new Set<number>();
+		return books.filter((book) => {
+			const vol = parseVolumeNumber(book.title);
+			if (vol === Infinity) return true;
+			if (seen.has(vol)) return false;
+			seen.add(vol);
+			return true;
+		});
 	}
 
 	onOpen() {
