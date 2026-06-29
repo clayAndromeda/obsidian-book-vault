@@ -41,7 +41,12 @@ async function ensureFolder(app: App, folderPath: string): Promise<void> {
 	}
 }
 
-async function downloadThumbnail(app: App, book: BookInfo, settings: BookVaultSettings): Promise<string> {
+export function parseVolumeNumber(title: string): number {
+	const match = title.match(/(\d+)[^0-9]*$/);
+	return match ? parseInt(match[1], 10) : Infinity;
+}
+
+export async function downloadThumbnail(app: App, book: BookInfo, settings: BookVaultSettings): Promise<string> {
 	if (!book.thumbnailUrl || !settings.downloadThumbnail) return "";
 
 	const safeName = book.title.replace(/[\\/:*?"<>|]/g, "_");
@@ -83,5 +88,61 @@ export async function createBookNote(app: App, book: BookInfo, settings: BookVau
 
 	const file = await app.vault.create(filePath, content);
 	new Notice(`ノートを作成しました: ${filePath}`);
+	return file;
+}
+
+export async function createSeriesNote(
+	app: App,
+	seriesName: string,
+	books: BookInfo[],
+	settings: BookVaultSettings
+): Promise<TFile> {
+	const sorted = [...books].sort((a, b) => parseVolumeNumber(a.title) - parseVolumeNumber(b.title));
+	const firstBook = sorted[0];
+
+	let thumbnailEmbed = "";
+	if (firstBook) {
+		try {
+			thumbnailEmbed = await downloadThumbnail(app, firstBook, settings);
+		} catch (e) {
+			new Notice(`サムネイルのダウンロードに失敗しました: ${e instanceof Error ? e.message : "不明なエラー"}`);
+		}
+	}
+
+	const authors = firstBook?.authors.join(", ") ?? "";
+	const volumeCount = books.length;
+	const thumbnailSection = thumbnailEmbed ? `\n${thumbnailEmbed}\n` : "";
+
+	const content = `---
+title: "${seriesName}"
+authors: [${authors}]
+type: series
+volumes: ${volumeCount}
+date: "${formatDate()}"
+---
+
+# ${seriesName}
+${thumbnailSection}
+## 書籍情報
+- **著者**: ${authors}
+- **巻数**: ${volumeCount}巻
+
+## メモ
+
+`;
+
+	const safeName = seriesName.replace(/[\\/:*?"<>|]/g, "_");
+	const filePath = normalizePath(`${settings.noteFolder}/${safeName}.md`);
+
+	await ensureFolder(app, settings.noteFolder);
+
+	const existing = app.vault.getAbstractFileByPath(filePath);
+	if (existing instanceof TFile) {
+		new Notice(`シリーズページは既に存在します: ${filePath}`);
+		return existing;
+	}
+
+	const file = await app.vault.create(filePath, content);
+	new Notice(`シリーズページを作成しました: ${filePath}`);
 	return file;
 }

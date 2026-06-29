@@ -36,3 +36,48 @@
 	font-size: 0.8em;
 	color: var(--text-faint);
 }
+
+.book-vault-series-controls {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.book-vault-series-ctrl-btn {
+	padding: 4px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.book-vault-series-list {
+	max-height: 380px;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	margin-bottom: 12px;
+}
+
+.book-vault-series-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 10px;
+	cursor: pointer;
+}
+
+.book-vault-series-item:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.book-vault-series-checkbox {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
+.book-vault-series-footer {
+	display: flex;
+	justify-content: flex-end;
+	padding-top: 4px;
+}

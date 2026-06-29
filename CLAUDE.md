@@ -35,3 +35,6 @@ npm run deploy       # .envのOBSIDIAN_VAULT_PATHへデプロイ（main.js, mani
 - `main.js` はビルド成果物。gitignore済み
 - Obsidian最低バージョン: 0.15.0
 
+## 進行中の作業
+現在 [シリーズまとめて登録の計画](docs/plan-シリーズまとめて登録.md) を実装中。
+
