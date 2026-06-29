@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-book-vault",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "Obsidian plugin for creating book notes from Google Books",
 	"main": "main.js",
 	"scripts": {
