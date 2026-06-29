@@ -86,22 +86,12 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function searchBooksForSeries(query: string, apiKey?: string): Promise<BookInfo[]> {
-	const pageSize = 40;
-	const maxPages = 3;
-	const all: BookInfo[] = [];
-
-	for (let page = 0; page < maxPages; page++) {
-		const items = await searchBooks(query, pageSize, apiKey, page * pageSize);
-		all.push(...items);
-		if (items.length < pageSize) break;
-		if (page < maxPages - 1) await sleep(300);
-	}
-
-	return all;
+interface PageResult {
+	items: BookInfo[];
+	totalItems: number;
 }
 
-export async function searchBooks(query: string, maxResults: number, apiKey?: string, startIndex = 0): Promise<BookInfo[]> {
+async function fetchBooksPage(query: string, startIndex: number, maxResults: number, apiKey?: string): Promise<PageResult> {
 	const q = isISBN(query) ? `isbn:${query.replace(/-/g, "")}` : `intitle:${query}`;
 	let url = `${API_ENDPOINT}?q=${encodeURIComponent(q)}&maxResults=${maxResults}&startIndex=${startIndex}`;
 	if (apiKey) {
@@ -115,24 +105,39 @@ export async function searchBooks(query: string, maxResults: number, apiKey?: st
 		try {
 			const response = await requestUrl({ url });
 			const data = response.json;
-
-			if (!data.items || data.items.length === 0) {
-				return [];
-			}
-
-			return (data.items as GoogleBooksVolume[]).map(volumeToBookInfo);
+			return {
+				items: data.items ? (data.items as GoogleBooksVolume[]).map(volumeToBookInfo) : [],
+				totalItems: data.totalItems ?? 0,
+			};
 		} catch (e: unknown) {
 			lastError = parseApiError(e);
-
 			if (lastError.status === 429 && attempt < MAX_RETRIES) {
-				const waitMs = 1000 * Math.pow(2, attempt); // 1s, 2s
-				await sleep(waitMs);
+				await sleep(1000 * Math.pow(2, attempt));
 				continue;
 			}
-
 			break;
 		}
 	}
 
 	throw new Error(lastError?.message || "APIリクエスト失敗");
+}
+
+export async function searchBooksForSeries(query: string, apiKey?: string): Promise<BookInfo[]> {
+	const pageSize = 40;
+	const maxTotal = 120;
+	const all: BookInfo[] = [];
+
+	for (let startIndex = 0; startIndex < maxTotal; startIndex += pageSize) {
+		const { items, totalItems } = await fetchBooksPage(query, startIndex, pageSize, apiKey);
+		all.push(...items);
+		if (items.length === 0 || all.length >= Math.min(totalItems, maxTotal)) break;
+		await sleep(300);
+	}
+
+	return all;
+}
+
+export async function searchBooks(query: string, maxResults: number, apiKey?: string, startIndex = 0): Promise<BookInfo[]> {
+	const { items } = await fetchBooksPage(query, startIndex, maxResults, apiKey);
+	return items;
 }
