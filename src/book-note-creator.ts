@@ -110,22 +110,20 @@ export async function createSeriesNote(
 	}
 
 	const authors = firstBook?.authors.join(", ") ?? "";
-	const volumeCount = books.length;
+	const authorsLinked = firstBook?.authors.map((a) => `[[${a}]]`).join(", ") ?? "";
 	const thumbnailSection = thumbnailEmbed ? `\n${thumbnailEmbed}\n` : "";
 
 	const content = `---
 title: "${seriesName}"
 authors: [${authors}]
 type: series
-volumes: ${volumeCount}
 date: "${formatDate()}"
 ---
 
 # ${seriesName}
 ${thumbnailSection}
 ## 書籍情報
-- **著者**: ${authors}
-- **巻数**: ${volumeCount}巻
+- **著者**: ${authorsLinked}
 
 ## メモ
 
